@@ -1,0 +1,2 @@
+pinotdb
+opensky_api
