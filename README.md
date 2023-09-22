@@ -34,5 +34,6 @@ If you have any questions, feedback, or suggestions, feel free to [open an issue
 
 | Example  | Description |
 | -------- | ------- |
-|[OpenSky Network’s live API](opensky) | The API lets you retrieve live airspace information for research and non-commerical purposes.|
+|[Perf Testing Apache Pinot with Gatling](gatling) | This example aims to guide you through the process of performance testing Apache Pinot using [Gatling](https://gatling.io/docs/gatling/tutorials/quickstart/), a widely-used load testing tool. We'll explore the key concepts, methodologies, and best practices for assessing the performance and scalability of your Pinot cluster.|
+|[OpenSky Network’s live API](opensky) | **WIP**: The API lets you retrieve live airspace information for research and non-commerical purposes.|
 
