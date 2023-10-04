@@ -9,8 +9,6 @@ from dotenv import load_dotenv
 
 from confluent_kafka import Producer
 
-p = Producer({'bootstrap.servers': 'mybroker1,mybroker2'})
-
 def delivery_report(err, msg):
     """ Called once for each message produced to indicate delivery result.
         Triggered by poll() or flush(). """

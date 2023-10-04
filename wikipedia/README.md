@@ -28,6 +28,7 @@ vim /usr/local/etc/kafka/server.properties
 Start Kafka
 
 ```bash
+brew services start zookeeper
 brew services start kafka
 # brew services restart kafka # to restart
 ```
@@ -142,10 +143,10 @@ docker run \
 The schema will appear in the `config` directory. You'll need to modify it to add a timestamp. Delete the `published` field and append this to the end of the schema.
 
 ```json
-  ,"dateTimeFieldSpecs": [{
-      "name": "published",
-      "dataType": "STRING",
-      "format" : "1:SECONDS:TIMESTAMP:EE, dd MMM yyyy HH:mm:SS zzz",
+   ,"dateTimeFieldSpecs": [{
+      "name": "published_mil",
+      "dataType": "LONG",
+      "format": "EPOCH",
       "granularity": "1:SECONDS"
   }]
 ```
@@ -154,42 +155,89 @@ The final schema can be seen [here](./schema.json)
 
 ### Table Config
 
+Next we need to define the table in Pinot. Below is the complete configuration we will use. Let's go over the important parts.
+
 ```json
 {
-    "tableName": "transcript",
+    "tableName": "wiki",
     "tableType": "REALTIME",
     "segmentsConfig": {
-        "timeColumnName": "timestamp",
-        "timeType": "MILLISECONDS",
-        "schemaName": "transcript",
-        "replicasPerPartition": "1"
-    }, 
+      "timeColumnName": "published_mil",
+      "timeType": "SECONDS",
+      "schemaName": "wiki",
+      "replicasPerPartition": "1"
+    },
     "ingestionConfig": {
       "complexTypeConfig": {
         "delimeter": "."
-      }
+      },
+      "transformConfigs": [{
+        "columnName": "published_mil",
+        "transformFunction": "fromDateTime(published, 'EE, dd MMM yyyy HH:mm:ss zzz')"
+      }]
     },
     "tenants": {},
     "tableIndexConfig": {
-        "loadMode": "MMAP",
-        "streamConfigs": {
-            "streamType": "kafka",
-            "stream.kafka.consumer.type": "lowlevel",
-            "stream.kafka.topic.name": "wiki",
-            "stream.kafka.decoder.prop.format": "JSON",
-            "stream.kafka.decoder.class.name": "org.apache.pinot.plugin.stream.kafka.KafkaJSONMessageDecoder",
-            "stream.kafka.consumer.factory.class.name": "org.apache.pinot.plugin.stream.kafka20.KafkaConsumerFactory",
-            "stream.kafka.broker.list": "localhost:9092",
-            "realtime.segment.flush.threshold.time": "3600000",
-            "realtime.segment.flush.threshold.rows": "50000",
-            "stream.kafka.consumer.prop.auto.offset.reset": "smallest"
-        }
+      "loadMode": "MMAP",
+      "streamConfigs": {
+        "streamType": "kafka",
+        "stream.kafka.consumer.type": "lowlevel",
+        "stream.kafka.topic.name": "wiki",
+        "stream.kafka.decoder.prop.format": "JSON",
+        "stream.kafka.decoder.class.name": "org.apache.pinot.plugin.stream.kafka.KafkaJSONMessageDecoder",
+        "stream.kafka.consumer.factory.class.name": "org.apache.pinot.plugin.stream.kafka20.KafkaConsumerFactory",
+        "stream.kafka.broker.list": "localhost:9092",
+        "realtime.segment.flush.threshold.time": "3600000",
+        "realtime.segment.flush.threshold.rows": "50000",
+        "stream.kafka.consumer.prop.auto.offset.reset": "smallest"
+      }
     },
     "metadata": {
-        "customConfigs": {}
+      "customConfigs": {}
     }
 }
 ```
+
+The `tableName` needs to be the same as the `schemaName` in `schema.json`.
+```json
+"tableName": "wiki",
+```
+
+Since we are consuming from Kafka, we set the property `tableType` to `REALTIME`.
+```json
+"tableType": "REALTIME",
+```
+
+Pinot distributes data by breaking the data into smaller chunks known as segments (similar to shards/partitions in relational databases). Segments are time-based partitions.
+The `segmentsConfig` 
+
+```json
+    "segmentsConfig": {
+      "timeColumnName": "published_mil",
+      "timeType": "SECONDS",
+      "schemaName": "wiki",
+      "replicasPerPartition": "1"
+    },
+```
+
+#### Ingestion Config
+In the sample message, the `published` field is formatted in such a way that Pinot cannot consume it to propery complete and create new segments. Also, the message has complex types in it that Pinot need to be aware of.
+
+```json
+    "ingestionConfig": {
+      "complexTypeConfig": {
+        "delimeter": "."
+      },
+      "transformConfigs": [{
+        "columnName": "published_mil",
+        "transformFunction": "fromDateTime(published, 'EE, dd MMM yyyy HH:mm:ss zzz')"
+      }]
+    },
+```
+
+The `delimeter` is applied in a transformation as the data is ingested into Pinot. Pinot will use `.` in the column name to indicate the levels in the JSON message.
+
+The `transformFunction` transforms this timestamp format in `published` `Tue, 03 Oct 2023 18:31:50 GMT` into milliseconds and sets it as the value in a new field called `published_mil`.
 
 ### Pinot CLI
 
@@ -200,13 +248,12 @@ pinot-admin AddTable \
     -tableConfigFile table.config.json \
     -schemaFile schema.json \
     -exec
-
 ```
 
 Delete table
 
 ```bash
-pinot-admin DeleteTable -tableName wiki 
+pinot-admin DeleteTable -tableName wiki -exec
 ```
 
 ```bash
@@ -216,10 +263,9 @@ pinot-admin DeleteSchema -schemaName wiki -exec
 ## Execute Qeury
 
 ```sql
-select author, title, count(*) as changes from wiki
-group by author, title
+select author, title, comments, count(*) as changes 
+from wiki
+group by author, title, comments
 having changes > 10
 order by changes desc
 ```
-
-

@@ -56,9 +56,9 @@
     "dataType" : "STRING"
   } ],
   "dateTimeFieldSpecs": [{
-      "name": "published",
-      "dataType": "STRING",
-      "format" : "1:SECONDS:TIMESTAMP",
+      "name": "published_mil",
+      "dataType": "LONG",
+      "format": "EPOCH",
       "granularity": "1:SECONDS"
   }]
 }
