@@ -136,6 +136,7 @@ select
   CancellationCode, 
   avg(ArrDelayMinutes) delay 
 from airlineStats 
+where AirTime > 100
 group by CancellationCode
 ```
 

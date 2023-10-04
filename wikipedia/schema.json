@@ -1,0 +1,64 @@
+{
+  "schemaName" : "wiki",
+  "dimensionFieldSpecs" : [ {
+    "name" : "title",
+    "dataType" : "STRING"
+  }, {
+    "name" : "title_detail.type",
+    "dataType" : "STRING"
+  }, {
+    "name" : "title_detail.base",
+    "dataType" : "STRING"
+  }, {
+    "name" : "title_detail.value",
+    "dataType" : "STRING"
+  }, {
+    "name" : "links",
+    "dataType" : "STRING",
+    "singleValueField" : false
+  }, {
+    "name" : "link",
+    "dataType" : "STRING"
+  }, {
+    "name" : "id",
+    "dataType" : "STRING"
+  }, {
+    "name" : "guidislink",
+    "dataType" : "BOOLEAN"
+  }, {
+    "name" : "summary",
+    "dataType" : "STRING"
+  }, {
+    "name" : "summary_detail.type",
+    "dataType" : "STRING"
+  }, {
+    "name" : "summary_detail.base",
+    "dataType" : "STRING"
+  }, {
+    "name" : "summary_detail.value",
+    "dataType" : "STRING"
+  }, {
+    "name" : "published_parsed",
+    "dataType" : "INT",
+    "singleValueField" : false
+  }, {
+    "name" : "authors",
+    "dataType" : "STRING",
+    "singleValueField" : false
+  }, {
+    "name" : "author",
+    "dataType" : "STRING"
+  }, {
+    "name" : "author_detail.name",
+    "dataType" : "STRING"
+  }, {
+    "name" : "comments",
+    "dataType" : "STRING"
+  } ],
+  "dateTimeFieldSpecs": [{
+      "name": "published",
+      "dataType": "STRING",
+      "format" : "1:SECONDS:TIMESTAMP",
+      "granularity": "1:SECONDS"
+  }]
+}

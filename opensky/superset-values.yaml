@@ -1,0 +1,4 @@
+bootstrapScript:
+  #!/bin/bash
+  pip install pinotdb
+

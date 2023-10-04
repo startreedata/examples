@@ -1,2 +1,2 @@
 pinotdb
-opensky_api
+feedparser

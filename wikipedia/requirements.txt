@@ -1,0 +1,5 @@
+feedparser
+python-dotenv==0.20.0
+requests
+chardet
+confluent_kafka
