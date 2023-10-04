@@ -11,6 +11,7 @@ In this exmample, we're going to run a local Kafka cluster that was installed us
 
 ```bash
 brew install kafka
+# brew upgrade kafka
 ```
 
 If you already have brew Kafka installed, then to ensure Kafka starts up fresh, delete the file below so that Kafka doesn't think it's trying to join a differen cluster ID. You may need to do this every time you restart Kafka.
@@ -215,8 +216,10 @@ pinot-admin DeleteSchema -schemaName wiki -exec
 ## Execute Qeury
 
 ```sql
-select author, title, count(*) as c from wiki
+select author, title, count(*) as changes from wiki
 group by author, title
-having c > 10
-order by c desc
+having changes > 10
+order by changes desc
 ```
+
+
