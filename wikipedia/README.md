@@ -63,9 +63,9 @@ Tail the Pinot logs.
 tail -f /usr/local/var/log/pinot/pinot_output.log
 ```
 
-## Pinot Table
+## Sample Document
 
-Below is a sample message in Kafka.
+Below is a sample Wiki change message in Kafka.
 
 ```json
 {
@@ -120,7 +120,8 @@ Below is a sample message in Kafka.
 ```
 This sample document looks complex but we can automatically infer the schema by running the `JsonToPinotSchema` tool.
 
-### Infer the Schema
+## Infer the Schema
+The Pinot project comes with a tool that will help you get started with creating a Pinot schema from a sample document.
 
 ```bash
 # download docker compose
@@ -140,7 +141,9 @@ docker run \
     -dimensions=""
 ```
 
-The schema will appear in the `config` directory. You'll need to modify it to add a timestamp. Delete the `published` field and append this to the end of the schema.
+### Timestamp
+
+The schema will appear in the `config` directory. You'll need to modify it to add a timestamp and primary key. Delete the `published` field and append this to the end of the schema.
 
 ```json
    ,"dateTimeFieldSpecs": [{
@@ -151,9 +154,18 @@ The schema will appear in the `config` directory. You'll need to modify it to ad
   }]
 ```
 
+Notice `published_mil` is a field that does not exist in the sample document. We'll address this in the [Ingestion Config](#ingestion-config) section.
+
+### Primary Key
+We'll use the property `id` as the primary key. So we will need to state that in teh schema.
+
+```json
+"primaryKeyColumns": ["id"]
+```
+
 The final schema can be seen [here](./schema.json)
 
-### Table Config
+## Table Config
 
 Next we need to define the table in Pinot. Below is the complete configuration we will use. Let's go over the important parts.
 
@@ -174,11 +186,13 @@ Next we need to define the table in Pinot. Below is the complete configuration w
       "transformConfigs": [{
         "columnName": "published_mil",
         "transformFunction": "fromDateTime(published, 'EE, dd MMM yyyy HH:mm:ss zzz')"
-      }]
+      }
+    ]
     },
     "tenants": {},
     "tableIndexConfig": {
       "loadMode": "MMAP",
+      "nullHandlingEnabled": true,
       "streamConfigs": {
         "streamType": "kafka",
         "stream.kafka.consumer.type": "lowlevel",
@@ -194,6 +208,17 @@ Next we need to define the table in Pinot. Below is the complete configuration w
     },
     "metadata": {
       "customConfigs": {}
+    },
+    "routing": {
+      "instanceSelectorType": "strictReplicaGroup"
+    },
+    "upsertConfig": {
+      "mode": "PARTIAL",
+      "partialUpsertStrategies":{
+        "link": "OVERWRITE",
+        "summary": "OVERWRITE",
+        "title": "OVERWRITE"
+      }
     }
 }
 ```
@@ -220,7 +245,7 @@ The `segmentsConfig`
     },
 ```
 
-#### Ingestion Config
+### Ingestion Config
 In the sample message, the `published` field is formatted in such a way that Pinot cannot consume it to propery complete and create new segments. Also, the message has complex types in it that Pinot need to be aware of.
 
 ```json
@@ -239,7 +264,10 @@ The `delimeter` is applied in a transformation as the data is ingested into Pino
 
 The `transformFunction` transforms this timestamp format in `published` `Tue, 03 Oct 2023 18:31:50 GMT` into milliseconds and sets it as the value in a new field called `published_mil`.
 
-### Pinot CLI
+### Primary Key / UPSERT
+
+
+## Pinot CLI
 
 Create table
 
@@ -281,3 +309,12 @@ order by changes desc
 select author, title, count(title) OVER(PARTITION BY author) changes
 from wiki
 ```
+
+
+## Jupyter Notebook
+
+```bash
+pip install notebook
+jupyter notebook
+```
+Open the notebook [here](./Wikipedia.ipynb)
