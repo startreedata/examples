@@ -14,11 +14,13 @@
       "transformConfigs": [{
         "columnName": "published_mil",
         "transformFunction": "fromDateTime(published, 'EE, dd MMM yyyy HH:mm:ss zzz')"
-      }]
+      }
+    ]
     },
     "tenants": {},
     "tableIndexConfig": {
       "loadMode": "MMAP",
+      "nullHandlingEnabled": true,
       "streamConfigs": {
         "streamType": "kafka",
         "stream.kafka.consumer.type": "lowlevel",
@@ -34,5 +36,16 @@
     },
     "metadata": {
       "customConfigs": {}
+    },
+    "routing": {
+      "instanceSelectorType": "strictReplicaGroup"
+    },
+    "upsertConfig": {
+      "mode": "PARTIAL",
+      "partialUpsertStrategies":{
+        "link": "OVERWRITE",
+        "summary": "OVERWRITE",
+        "title": "OVERWRITE"
+      }
     }
 }

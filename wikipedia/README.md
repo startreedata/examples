@@ -260,12 +260,24 @@ pinot-admin DeleteTable -tableName wiki -exec
 pinot-admin DeleteSchema -schemaName wiki -exec
 ```
 
+## Produce to Kafka
+This application reads a RSS feed of Wikipedia page changes and sends them to Kafka.
+
+https://en.wikipedia.org/w/api.php?action=feedrecentchanges
+
+```bash
+python kafka.py
+```
+
 ## Execute Qeury
 
 ```sql
-select author, title, comments, count(*) as changes 
-from wiki
-group by author, title, comments
-having changes > 10
+select author, title, count(*) changes from wiki
+group by author, title
 order by changes desc
+```
+
+```sql
+select author, title, count(title) OVER(PARTITION BY author) changes
+from wiki
 ```

@@ -60,5 +60,6 @@
       "dataType": "LONG",
       "format": "EPOCH",
       "granularity": "1:SECONDS"
-  }]
+  }],
+  "primaryKeyColumns": ["id"]
 }

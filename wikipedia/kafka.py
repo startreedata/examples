@@ -24,8 +24,12 @@ def poll(p):
 	p.poll(0)
 
 	for e in entries:
-		print(json.dumps(e))
-		p.produce('wiki', json.dumps(e).encode('utf-8'), callback=delivery_report)
+		j = json.dumps(e)
+		p.produce(
+			key=e['id'],
+			topic='wiki', 
+			value=j.encode('utf-8'), 
+			on_delivery=delivery_report)
 		
 	# Wait for any outstanding messages to be delivered and delivery report
 	# callbacks to be triggered.
