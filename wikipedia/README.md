@@ -1,26 +1,29 @@
 # Wikipedia
 
+In this example, we will be capturing Wikipedia page change events in Apache Pinot. We will analyze the Wikipedia data and build a Pinot and table specifically. We will be implementing a two features in Apache Pinot: UPSERT and Ingestion Transformation. At the end, we'll visualize the data in a Jupyter notebook.
+
 ```mermaid
 flowchart LR
 
-Python-->Kafka-->Pinot
+Python-->k[Apache Kafka]-->p[Apache Pinot]-->j[Jupyter Notebook]
 ```
 
 ## Homebrew Kafka Formulae
-In this exmample, we're going to run a local Kafka cluster that was installed using `brew` on MacOS.
+In this example, we're going to run a local Kafka cluster that was installed using `brew` on MacOS. If you are on windows, you can use `Ninite`, `Chocolatey`, or `scoop`.
 
 ```bash
 brew install kafka
-# brew upgrade kafka
+# brew upgrade kafka # you already installed it
 ```
 
-If you already have brew Kafka installed, then to ensure Kafka starts up fresh, delete the file below so that Kafka doesn't think it's trying to join a differen cluster ID. You may need to do this every time you restart Kafka.
+If you already have brew Kafka installed, then to ensure Kafka starts up fresh but deleting the file below. Otherwise you'll get en error because Kafka thinks it's trying to join a different cluster ID. You may need to do this every time you restart Kafka.
 
 ```bash
 rm /usr/local/var/lib/kafka-logs/meta.properties
 ```
 
 Configure the `server.properties` file if needed for security. Otherwise, you should not need to edit this file.
+
 ```bash
 vim /usr/local/etc/kafka/server.properties
 ```
@@ -51,10 +54,11 @@ kafka-topics --bootstrap-server localhost:9092 --create --topic wiki
 ```
 
 ## Homebrew Pinot Formulae
-In this exmample, we're going to run a local Pinot cluster that was also installed using `brew` on MacOS.
+In this example, we're going to run a local Pinot cluster that was also installed using `brew` on MacOS.
 
 ```bash
 brew install pinot
+brew services start pinot
 ```
 
 Tail the Pinot logs.
@@ -62,6 +66,8 @@ Tail the Pinot logs.
 ```bash
 tail -f /usr/local/var/log/pinot/pinot_output.log
 ```
+
+Proceed to http://localhost:9000 to see the console. You may need to wait a minute before all the components appear.
 
 ## Sample Document
 
@@ -157,7 +163,7 @@ The schema will appear in the `config` directory. You'll need to modify it to ad
 Notice `published_mil` is a field that does not exist in the sample document. We'll address this in the [Ingestion Config](#ingestion-config) section.
 
 ### Primary Key
-We'll use the property `id` as the primary key. So we will need to state that in teh schema.
+We'll use the property `id` as the primary key. So we will need to configure that in the schema.
 
 ```json
 "primaryKeyColumns": ["id"]
@@ -246,7 +252,7 @@ The `segmentsConfig`
 ```
 
 ### Ingestion Config
-In the sample message, the `published` field is formatted in such a way that Pinot cannot consume it to propery complete and create new segments. Also, the message has complex types in it that Pinot need to be aware of.
+In the sample message, the `published` field is formatted in such a way that Pinot cannot consume it to properly complete and create new segments. Also, the message has complex types in it that Pinot need to be aware of.
 
 ```json
     "ingestionConfig": {
@@ -266,10 +272,24 @@ The `transformFunction` transforms this timestamp format in `published` `Tue, 03
 
 ### Primary Key / UPSERT
 
+Since our schema has a primary key, this instructs Pinot to perform UPSERT when data is being ingested. This feature is only available for REALTIME tables which are tables that consume from streaming platforms like Kafka.
+
+There are two modes UPSERT: FULL and PARTIAL. FULL updates all of the fields. PARTIAL only updates the fields specified in `partialUpsertStrategies`.
+
+```json
+    "upsertConfig": {
+      "mode": "PARTIAL",
+      "partialUpsertStrategies":{
+        "link": "OVERWRITE",
+        "summary": "OVERWRITE",
+        "title": "OVERWRITE"
+      }
+    }
+```
 
 ## Pinot CLI
 
-Create table
+Once you've created the schema and table configuration, you can create a table using the `pinot-admin` CLI.
 
 ```bash
 pinot-admin AddTable \
@@ -278,13 +298,10 @@ pinot-admin AddTable \
     -exec
 ```
 
-Delete table
+If you need to modify the schema or table config, you can quickly delete the table and table then rebuild.
 
 ```bash
 pinot-admin DeleteTable -tableName wiki -exec
-```
-
-```bash
 pinot-admin DeleteSchema -schemaName wiki -exec
 ```
 
@@ -297,12 +314,14 @@ https://en.wikipedia.org/w/api.php?action=feedrecentchanges
 python kafka.py
 ```
 
-## Execute Qeury
+## Execute Query
 
 ```sql
 select author, title, count(*) changes from wiki
+where published_mil > now() - 1*60*1000
 group by author, title
 order by changes desc
+limit 10
 ```
 
 ```sql
@@ -312,9 +331,22 @@ from wiki
 
 
 ## Jupyter Notebook
+If you're familiar with Jupyter, you can use the notebook I created for you to visualize the Wikipedia data.
 
 ```bash
 pip install notebook
 jupyter notebook
 ```
 Open the notebook [here](./Wikipedia.ipynb)
+
+## You're going to hate me
+
+For quick setup, you can just run the `make` commands. If I had given you these commands first, you would not have learned anything. ;)
+
+```bash
+make start # to start the demo
+
+python kafka.py
+
+make stop # to destroy the demo
+```
