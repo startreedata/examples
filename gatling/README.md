@@ -51,7 +51,7 @@ curl -H "Content-Type: application/json" -X POST \
 
 
 ## Perf Testing with Gatling
-Gatling too is a powerful open-source load testing solution designed for continuous load testing and integrates with your development pipeline. Gatling includes a web recorder and colorful reports. You can learn more by visting their documentation https://gatling.io/docs/gatling/tutorials/installation/.
+Gatling tool is a powerful open-source load testing solution designed for continuous load testing and integrates with your development pipeline. Gatling includes a web recorder and colorful reports. You can learn more by visiting their documentation https://gatling.io/docs/gatling/tutorials/installation/.
 
 In our example, we will be using Gatling in two ways:
 
