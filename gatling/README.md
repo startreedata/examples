@@ -36,7 +36,7 @@ In this QuickStart, we use Docker to start a single node Kafka cluster along wit
 
 - Starts Apache Kafka, Apache Zookeeper, Pinot Controller, Pinot Broker, and Pinot Server.
 - Creates airlineStats table along with other tables.
-- Launches a meetup stream
+- Launches a airlineStats stream
 - Publishes data to a Kafka topic airlineStatsEvents that is subscribed to by Pinot.
 - Issues sample queries to Pinot
 
