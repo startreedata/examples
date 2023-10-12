@@ -38,3 +38,6 @@ If you have any questions, feedback, or suggestions, feel free to [open an issue
 |[Wikipedia](wikipedia)|Capturing Wikipedia page changes in Pinot. This example uses a realtime UPSERT table and ingestion transformations in Pinot. You can quickly viualize the data in a Jupyter Notebook.|
 |[OpenSky Network’s live API](opensky) | **WIP**: The API lets you retrieve live airspace information for research and non-commerical purposes.|
 
+## Pinot Recipes
+
+Additional Pinot Recipes can be found [here](https://github.com/startreedata/pinot-recipes)
