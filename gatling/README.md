@@ -9,7 +9,7 @@ This presentation aims to guide you through the process of performance testing A
 - [git](https://github.com/git-guides/install-git)
 - [jq](https://pypi.org/project/jq/)
 
-And of course, your favoraite IDE or editor.
+And of course, your favorite IDE or editor.
 
 ## Use Case
 
