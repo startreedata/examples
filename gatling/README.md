@@ -66,9 +66,9 @@ We will be starting off with the SBT plugin because the code we generate in the 
 git clone https://github.com/gatling/gatling-sbt-plugin-demo
 ```
 
-This repository is a working example of a project that has Gatling's sbt plugin working. Specifically, the `build.sbt`, `build.properties`, and `plubins.sbt`. More importantly, it will have a sample class that implements a `Simulation` writting in scala.
+This repository is a working example of a project that has Gatling's sbt plugin working. Specifically, the `build.sbt`, `build.properties`, and `plubins.sbt`. More importantly, it will have a sample class that implements a `Simulation` writing in scala.
 
-Below is the tree you will get after you clode the repositry.
+Below is the tree you will get after you clone the repository.
 
 ```
 .
@@ -96,7 +96,7 @@ Below is the tree you will get after you clode the repositry.
 ### Sample Simulation
 If you are not familiar with scala, don't worry, the code should be easy enough for you to understand what is happening.
 
-Firstly, we have some important imports: `io.gatling.core.Predef._` and `io.gatling.http.Predef._`. Core is obviously the core of Gatling. The `http` import provids the libraries enable you to invoke REST APIs.
+Firstly, we have some important imports: `io.gatling.core.Predef._` and `io.gatling.http.Predef._`. Core is obviously the core of Gatling. The `http` import provides the libraries enable you to invoke REST APIs.
 
 In the code example below, `.post("http://localhost:8000/query/sql")` is the Apache Pinot SQL endpoint. This is how you can invoke SQL queries in your Gatling test.
 
@@ -142,7 +142,7 @@ group by CancellationCode
 
 Next, we create a scenario where we execute the POST request (the SQL statement) referenced by `h`. Then we `pause` for 1 second then execute the sql again `h`. 
 
-Gatling Scenarios define logic or user behavor on an application that calls Apache Pinot's SQL API.
+Gatling Scenarios define logic or user behavior on an application that calls Apache Pinot's SQL API.
 
 ```scala
 val s = scenario("Select").exec(h).pause(1).exec(h)
@@ -303,7 +303,7 @@ Please open the following file: file:///Users/hubertdulay/development/startree-e
 Again you can open the file for a dynamic report.
 
 ## Summary
-Apache Pinot is an extremely powerful real-time OLAP system that enables low queries per second (QPS) and high concurrency (number of end users). You can use Gatling to prove Pinot's capabilties over other solutions.
+Apache Pinot is an extremely powerful real-time OLAP system that enables low queries per second (QPS) and high concurrency (number of end users). You can use Gatling to prove Pinot's capabilities over other solutions.
 
 If you want to try out Apache Pinot, the following resources will help you get started:
 
