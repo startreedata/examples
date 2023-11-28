@@ -361,14 +361,3 @@ jupyter notebook
 ```
 Open the notebook [here](./Wikipedia.ipynb)
 
-## You're going to hate me
-
-For quick setup, you can just run the `make` commands. If I had given you these commands first, you would not have learned anything. ;)
-
-```bash
-make start # to start the demo
-
-python kafka.py
-
-make stop # to destroy the demo
-```
