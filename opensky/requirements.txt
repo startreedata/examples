@@ -1,2 +1,0 @@
-pinotdb
-feedparser

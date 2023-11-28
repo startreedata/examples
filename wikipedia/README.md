@@ -287,6 +287,19 @@ There are two modes UPSERT: FULL and PARTIAL. FULL updates all of the fields. PA
     }
 ```
 
+[More strategies](https://docs.pinot.apache.org/basics/data-import/upsert#upsert-modes) can be used for partial UPSERT strategies. 
+
+```json
+  "upsertConfig": {
+    "mode": "PARTIAL",
+    "partialUpsertStrategies":{
+      "col1": "INCREMENT",
+      "col2": "IGNORE",
+      "col3": "UNION"
+    }
+  },
+```
+
 ## Pinot CLI
 
 Once you've created the schema and table configuration, you can create a table using the `pinot-admin` CLI.
@@ -315,20 +328,29 @@ python kafka.py
 ```
 
 ## Execute Query
+See Wikipedia updates in the past minute.
 
 ```sql
 select author, title, count(*) changes from wiki
 where published_mil > now() - 1*60*1000
 group by author, title
 order by changes desc
-limit 10
 ```
+
+Select `Use Multi-Stage Engine` and execute the windowing function below.
 
 ```sql
 select author, title, count(title) OVER(PARTITION BY author) changes
 from wiki
+order by changes desc
 ```
 
+```bash
+pinot-admin AddTable \
+    -tableConfigFile table.config.indexed.json \
+    -schemaFile schema.json \
+    -exec
+```
 
 ## Jupyter Notebook
 If you're familiar with Jupyter, you can use the notebook I created for you to visualize the Wikipedia data.
