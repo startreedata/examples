@@ -8,63 +8,10 @@ flowchart LR
 Python-->k[Apache Kafka]-->p[Apache Pinot]-->j[Jupyter Notebook]
 ```
 
-## Homebrew Kafka Formulae
-In this example, we're going to run a local Kafka cluster that was installed using `brew` on MacOS. If you are on windows, you can use `Ninite`, `Chocolatey`, or `scoop`.
+## Quickstart
 
 ```bash
-brew install kafka
-# brew upgrade kafka # you already installed it
-```
-
-If you already have brew Kafka installed, then to ensure Kafka starts up fresh but deleting the file below. Otherwise you'll get en error because Kafka thinks it's trying to join a different cluster ID. You may need to do this every time you restart Kafka.
-
-```bash
-rm /usr/local/var/lib/kafka-logs/meta.properties
-```
-
-Configure the `server.properties` file if needed for security. Otherwise, you should not need to edit this file.
-
-```bash
-vim /usr/local/etc/kafka/server.properties
-```
-
-Start Kafka
-
-```bash
-brew services start zookeeper
-brew services start kafka
-# brew services restart kafka # to restart
-```
-
-Tail the log
-```bash
-tail -f /usr/local/var/log/kafka/kafka_output.log
-```
-
-Then verify that Kafka is listening
-
-```bash
-nc -v localhost 9092
-```
-
-Now create a topic in Kafka.
-
-```bash
-kafka-topics --bootstrap-server localhost:9092 --create --topic wiki
-```
-
-## Homebrew Pinot Formulae
-In this example, we're going to run a local Pinot cluster that was also installed using `brew` on MacOS.
-
-```bash
-brew install pinot
-brew services start pinot
-```
-
-Tail the Pinot logs.
-
-```bash
-tail -f /usr/local/var/log/pinot/pinot_output.log
+pinot-admin QuickStart -type stream
 ```
 
 Proceed to http://localhost:9000 to see the console. You may need to wait a minute before all the components appear.
@@ -206,7 +153,7 @@ Next we need to define the table in Pinot. Below is the complete configuration w
         "stream.kafka.decoder.prop.format": "JSON",
         "stream.kafka.decoder.class.name": "org.apache.pinot.plugin.stream.kafka.KafkaJSONMessageDecoder",
         "stream.kafka.consumer.factory.class.name": "org.apache.pinot.plugin.stream.kafka20.KafkaConsumerFactory",
-        "stream.kafka.broker.list": "localhost:9092",
+        "stream.kafka.broker.list": "kafka:9092",
         "realtime.segment.flush.threshold.time": "3600000",
         "realtime.segment.flush.threshold.rows": "50000",
         "stream.kafka.consumer.prop.auto.offset.reset": "smallest"

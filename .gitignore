@@ -1,4 +1,6 @@
 .env
 .venv
 logs
-flink
+flink-connector
+batch
+.idea
