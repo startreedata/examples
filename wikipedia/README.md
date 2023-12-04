@@ -279,7 +279,7 @@ See Wikipedia updates in the past minute.
 
 ```sql
 select author, title, count(*) changes from wiki
-where published_mil > now() - 1*60*1000
+where published_mil > now() - 7*24*60*60*1000
 group by author, title
 order by changes desc
 ```
