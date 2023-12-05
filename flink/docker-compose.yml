@@ -1,38 +1,8 @@
 version: "3.7"
+# include:
+#   - ../pinot-compose-include.yml
+
 services:
-  jobmanager:
-    image: flink:latest
-    ports:
-      - "8081:8081"
-    command: jobmanager
-    environment:
-      - |
-        FLINK_PROPERTIES=
-        jobmanager.rpc.address: jobmanager        
-
-  taskmanager:
-    image: flink:latest
-    depends_on:
-      - jobmanager
-    command: taskmanager
-    scale: 1
-    environment:
-      - |
-        FLINK_PROPERTIES=
-        jobmanager.rpc.address: jobmanager
-        taskmanager.numberOfTaskSlots: 2        
-  sql-client:
-    image: flink:latest
-    command: bin/sql-client.sh
-    depends_on:
-      - jobmanager
-    environment:
-      - |
-        FLINK_PROPERTIES=
-        jobmanager.rpc.address: jobmanager
-        rest.address: jobmanager        
-
-
   pinot-zookeeper:
     image: zookeeper:3.5.6
     container_name: pinot-zookeeper
@@ -75,12 +45,38 @@ services:
     depends_on:
       - pinot-broker
 
-  kafka:
-    image: bitnami/kafka:latest
-    container_name: "kafka"
-    environment:
-      KAFKA_ZOOKEEPER_CONNECT: pinot-zookeeper:2181/kafka
-      KAFKA_BROKER_ID: 0
-      KAFKA_ADVERTISED_HOST_NAME: kafka
+
+
+  jobmanager:
+    image: flink:latest
     ports:
-      - "9092:9092"
+      - "8081:8081"
+    command: jobmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager        
+
+  taskmanager:
+    image: flink:latest
+    depends_on:
+      - jobmanager
+    command: taskmanager
+    scale: 1
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 2        
+  sql-client:
+    image: flink:latest
+    command: bin/sql-client.sh
+    depends_on:
+      - jobmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        rest.address: jobmanager        
+
+
