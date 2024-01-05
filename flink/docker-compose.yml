@@ -53,8 +53,8 @@ services:
     container_name: kafka
     ports:
       - "9092:9092"
-    volumes:
-      - "kafka_data:/bitnami"
+    # volumes:
+    #   - "kafka_data:/bitnami"
     environment:
       # KRaft settings
       - KAFKA_CFG_NODE_ID=0
@@ -71,28 +71,23 @@ services:
 
   jobmanager:
     image: flink:latest
+    container_name: jobmanager
+    hostname: jobmanager
     ports:
       - "8081:8081"
-    command: jobmanager
-    environment:
-      - |
-        FLINK_PROPERTIES=
-        jobmanager.rpc.address: jobmanager        
-
-  taskmanager:
-    image: flink:latest
-    depends_on:
-      - jobmanager
-    command: taskmanager
-    scale: 1
+    command: bash /tmp/up.sh
     environment:
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: jobmanager
-        taskmanager.numberOfTaskSlots: 2        
+        taskmanager.numberOfTaskSlots: 16
+        parallelism.default: 8
+    volumes:
+      - ./docker:/tmp/    
+
   sql-client:
     image: flink:latest
-    command: bin/sql-client.sh
+    command: bin/sql-client.sh -l lib
     depends_on:
       - jobmanager
     environment:
@@ -102,3 +97,23 @@ services:
         rest.address: jobmanager        
 
 
+  postgres:
+    image: postgres:latest
+    restart: always
+    container_name: postgres
+    hostname: postgres
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: movies_db
+    command: ['postgres', '-c', 'wal_level=logical']
+    healthcheck:
+      test: ['CMD', 'psql', '-U', 'postgres', '-c', 'SELECT 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ./scripts:/docker-entrypoint-initdb.d
+      - ./data/:/tmp/data/

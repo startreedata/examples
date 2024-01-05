@@ -1,0 +1,37 @@
+{
+    "tableName": "obt",
+    "tableType": "REALTIME",
+    "segmentsConfig": {
+      "timeColumnName": "last_updated_mil",
+      "timeType": "MINUTES",
+      "schemaName": "obt",
+      "replicasPerPartition": "1"
+    },
+    "ingestionConfig": {
+      "transformConfigs": [{
+        "columnName": "last_updated_mil",
+        "transformFunction": "fromDateTime(last_update, 'yyyy-MM-dd HH:mm:ss')"
+      }
+    ]
+    },
+    "tenants": {},
+    "tableIndexConfig": {
+      "loadMode": "MMAP",
+      "nullHandlingEnabled": true,
+      "streamConfigs": {
+        "streamType": "kafka",
+        "stream.kafka.consumer.type": "lowlevel",
+        "stream.kafka.topic.name": "obt",
+        "stream.kafka.decoder.prop.format": "JSON",
+        "stream.kafka.decoder.class.name": "org.apache.pinot.plugin.stream.kafka.KafkaJSONMessageDecoder",
+        "stream.kafka.consumer.factory.class.name": "org.apache.pinot.plugin.stream.kafka20.KafkaConsumerFactory",
+        "stream.kafka.broker.list": "localhost:9092",
+        "realtime.segment.flush.threshold.time": "3600000",
+        "realtime.segment.flush.threshold.rows": "50000",
+        "stream.kafka.consumer.prop.auto.offset.reset": "smallest"
+      }
+    },
+    "metadata": {
+      "customConfigs": {}
+    }
+}

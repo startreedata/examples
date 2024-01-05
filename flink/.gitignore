@@ -1,0 +1,10 @@
+scripts
+*.zip
+data
+*.pid
+*.jar
+*.conf
+*flink*
+exec*
+jm*
+debezium-server
