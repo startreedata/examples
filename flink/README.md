@@ -116,7 +116,7 @@ CREATE TABLE pgrentals (
     last_update timestamp(3)
 ) WITH (
     'connector' = 'postgres-cdc', -- postgres cdc connector
-    'hostname' = 'localhost',
+    'hostname' = 'postgres',
     'port' = '5432',
     'username' = 'postgres',
     'password' = 'postgres',
@@ -168,7 +168,7 @@ CREATE TABLE OBT (
 WITH (
     'connector' = 'upsert-kafka',
     'topic' = 'obt',
-    'properties.bootstrap.servers' = 'localhost:9092',
+    'properties.bootstrap.servers' = 'kafka:9092',
     'properties.group.id' = 'obt',
     'key.format' = 'json',
     'value.format' = 'json'
@@ -228,6 +228,14 @@ r-->|Pinot|Join
 ```
 
 Instead of standing up a Debezium Server or Kafka Connect cluster, we will reuse the Flink cluster we have to pass data through and send data to Pinot.
+
+
+```bash
+
+
+kafka-topics.sh --bootstrap-server localhost:9092 --create --topic customers_sink
+kafka-topics.sh --bootstrap-server localhost:9092 --create --topic rentals_sink
+```
 
 ```sql
 CREATE OR REPLACE TABLE customers_sink(
