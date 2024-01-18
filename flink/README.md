@@ -148,6 +148,13 @@ In Flink, you'll need to create the destination table that
 ```sql
 
 CREATE TABLE OBT (
+    rental_id INT,
+    rental_date TIMESTAMP(3),
+    inventory_id INT,
+    customer_id0 INT,
+    return_date TIMESTAMP(3),
+    staff_id INT,
+    last_update TIMESTAMP(3),
     customer_id INT,
     store_id INT,
     first_name STRING,
@@ -156,13 +163,6 @@ CREATE TABLE OBT (
     address_id STRING,
     activebool BOOLEAN,
     last_updated TIMESTAMP(3),
-    rental_id INT,
-    rental_date TIMESTAMP(3),
-    inventory_id INT,
-    customer_id0 INT,
-    return_date TIMESTAMP(3),
-    staff_id INT,
-    last_update TIMESTAMP(3),
     PRIMARY KEY (rental_id) NOT ENFORCED
 )
 WITH (
@@ -175,8 +175,8 @@ WITH (
 );
 
 INSERT INTO OBT SELECT * 
-FROM pgcustomer c 
-JOIN pgrentals r ON c.customer_id=r.customer_id;
+FROM pgrentals r
+JOIN pgcustomer c  ON r.customer_id=c.customer_id;
 
 ```
 
