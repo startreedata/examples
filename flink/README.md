@@ -36,7 +36,6 @@ CREATE DATABASE dvdrental;
 
 ALTER ROLE "postgres" WITH LOGIN;
 ALTER USER postgres REPLICATION;
---GRANT ALL PRIVILEGES ON DATABASE dvdrental TO postgres;
 ALTER ROLE postgres WITH SUPERUSER CREATEDB CREATEROLE LOGIN ENCRYPTED PASSWORD 'postgres';
 
 \q -- exit
@@ -183,6 +182,13 @@ JOIN pgcustomer c  ON r.customer_id=c.customer_id;
 Sample output into the OBT topic.
 ```json
 {
+    "rental_id": 8525,
+    "rental_date": "2005-07-29 10:20:19",
+    "inventory_id": 1322,
+    "customer_id0": 111,
+    "return_date": "2005-07-30 05:49:19",
+    "staff_id": 2,
+    "last_update": "2006-02-16 02:30:53",
     "customer_id": 111,
     "store_id": 1,
     "first_name": "Carmen",
@@ -190,27 +196,21 @@ Sample output into the OBT topic.
     "email": "carmen.owens@sakilacustomer.org",
     "address_id": "115",
     "activebool": true,
-    "last_updated": null,
-    "rental_id": 8525,
-    "rental_date": "2005-07-29 10:20:19",
-    "inventory_id": 1322,
-    "customer_id0": 111,
-    "return_date": "2005-07-30 05:49:19",
-    "staff_id": 2,
-    "last_update": "2006-02-16 02:30:53"
+    "last_updated": null
 }
 ```
 
+Run the command below to create a REALTIME table in Pinot
+
 ```bash
-docker run \
-    -v ${PWD}/sample.json:/data/sample.json \
-    -v ${PWD}/config:/config \
-    apachepinot/pinot:latest JsonToPinotSchema \
-    -jsonFile /data/sample.json \
-    -pinotSchemaName="obt" \
-    -outputDir="/config" \
-    -dimensions=""
+docker exec -it pinot-controller bash
+
+./bin/pinot-admin.sh AddTable \
+    -tableConfigFile /tmp/pinot/table.config.json \
+    -schemaFile /tmp/pinot/obt.json \
+    -exec
 ```
+
 
 ## Joining in Apache Pinot
 
@@ -226,6 +226,9 @@ r-->|Pinot|Join
 
 
 ```
+
+
+
 
 Instead of standing up a Debezium Server or Kafka Connect cluster, we will reuse the Flink cluster we have to pass data through and send data to Pinot.
 
