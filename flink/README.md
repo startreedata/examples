@@ -8,6 +8,14 @@ flowchart LR
 Postgres-->f[Apache Flink + Ververica CDC Connector]-->k[Kafka]-->p[Apache Pinot]
 ```
 
+## Build
+
+Build the Flink image to contain connectors to Postgres CDC and Kafka
+
+```bash
+docker compose build --no-cache
+```
+
 
 ## Configuring Postgres For Change Data Capture
 
@@ -150,7 +158,7 @@ CREATE TABLE OBT (
     rental_id INT,
     rental_date TIMESTAMP(3),
     inventory_id INT,
-    customer_id0 INT,
+    customer_id INT,
     return_date TIMESTAMP(3),
     staff_id INT,
     last_update TIMESTAMP(3),
@@ -185,7 +193,7 @@ Sample output into the OBT topic.
     "rental_id": 8525,
     "rental_date": "2005-07-29 10:20:19",
     "inventory_id": 1322,
-    "customer_id0": 111,
+    "customer_id": 111,
     "return_date": "2005-07-30 05:49:19",
     "staff_id": 2,
     "last_update": "2006-02-16 02:30:53",
@@ -206,11 +214,10 @@ Run the command below to create a REALTIME table in Pinot
 docker exec -it pinot-controller bash
 
 ./bin/pinot-admin.sh AddTable \
-    -tableConfigFile /tmp/pinot/table.config.json \
+    -tableConfigFile /tmp/pinot/obt.table.config.json \
     -schemaFile /tmp/pinot/obt.json \
     -exec
 ```
-
 
 ## Joining in Apache Pinot
 
@@ -223,21 +230,23 @@ R[(Rental)]-->|Flink|r[Rental Pinot Table]
 
 c-->|Pinot|Join
 r-->|Pinot|Join
-
-
 ```
-
-
-
 
 Instead of standing up a Debezium Server or Kafka Connect cluster, we will reuse the Flink cluster we have to pass data through and send data to Pinot.
 
 
 ```bash
+kafka-topics.sh \
+    --bootstrap-server localhost:9092 \
+    --create \
+    --topic customer_sink \
+    --config "cleanup.policy=compact"
 
-
-kafka-topics.sh --bootstrap-server localhost:9092 --create --topic customers_sink
-kafka-topics.sh --bootstrap-server localhost:9092 --create --topic rentals_sink
+kafka-topics.sh \
+    --bootstrap-server localhost:9092 \
+    --create \
+    --topic rental_sink \
+    --config "cleanup.policy=compact"
 ```
 
 ```sql
@@ -253,8 +262,8 @@ CREATE OR REPLACE TABLE customers_sink(
 )
 WITH (
     'connector' = 'upsert-kafka',
-    'topic' = 'customers_sink',
-    'properties.bootstrap.servers' = 'localhost:9092',
+    'topic' = 'customer_sink',
+    'properties.bootstrap.servers' = 'kafka:9092',
     'key.format' = 'json',
     'value.format' = 'json'
 );
@@ -278,7 +287,7 @@ CREATE OR REPLACE TABLE rental_sink(
 )
 WITH (
     'connector' = 'upsert-kafka',
-    'topic' = 'rentals_sink',
+    'topic' = 'rental_sink',
     'properties.bootstrap.servers' = 'localhost:9092',
     'key.format' = 'json',
     'value.format' = 'json'
@@ -290,3 +299,40 @@ FROM pgrentals;
 insert into rental_sink select * from rentalsv;
 ```
 
+Create the Rental table
+
+```bash
+./bin/pinot-admin.sh AddTable \
+    -tableConfigFile /tmp/pinot/rental.table.config.json \
+    -schemaFile /tmp/pinot/rental.json \
+    -exec
+
+
+./bin/pinot-admin.sh AddTable \
+    -tableConfigFile /tmp/pinot/customer.table.config.json \
+    -schemaFile /tmp/pinot/customer.json \
+    -exec
+
+
+```
+
+```sql
+SELECT 
+    rental_id,
+    rental_date,
+    inventory_id,
+    r.customer_id,
+    return_date,
+    staff_id,
+    r.last_update as rental_last_update,
+    store_id,
+    first_name,
+    last_name,
+    email,
+    address_id,
+    activebool,
+    c.last_update as customer_last_update
+FROM rental r
+LEFT JOIN customers c  ON r.customer_id=c.customer_id;
+
+```

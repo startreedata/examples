@@ -1,0 +1,33 @@
+{
+    "schemaName" : "rental",
+    "dimensionFieldSpecs" : [ {
+      "name" : "rental_id",
+      "dataType" : "INT"
+    }, {
+      "name" : "rental_date",
+      "dataType" : "STRING"
+    }, {
+      "name" : "inventory_id",
+      "dataType" : "INT"
+    }, {
+      "name" : "customer_id",
+      "dataType" : "INT"
+    }, {
+      "name" : "return_date",
+      "dataType" : "STRING"
+    }, {
+      "name" : "staff_id",
+      "dataType" : "INT"
+    }, {
+      "name" : "last_update",
+      "dataType" : "STRING"
+    } ],
+    "dateTimeFieldSpecs": [{
+      "name": "last_updated_mil",
+      "dataType": "LONG",
+      "format": "EPOCH",
+      "granularity": "1:SECONDS"
+    }],
+    "primaryKeyColumns": ["rental_id"]
+  }
+  

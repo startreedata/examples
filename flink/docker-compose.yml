@@ -11,8 +11,9 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+
   pinot-controller:
-    image: apachepinot/pinot:0.12.0
+    image: apachepinot/pinot:1.0.0
     command: "StartController -zkAddress pinot-zookeeper:2181"
     container_name: pinot-controller
     restart: unless-stopped
@@ -26,7 +27,7 @@ services:
       - ./table/:/tmp/pinot/
 
   pinot-broker:
-    image: apachepinot/pinot:0.12.0
+    image: apachepinot/pinot:1.0.0
     command: "StartBroker -zkAddress pinot-zookeeper:2181"
     restart: unless-stopped
     container_name: "pinot-broker"
@@ -36,8 +37,9 @@ services:
       JAVA_OPTS: "-Dplugins.dir=/opt/pinot/plugins -Xms4G -Xmx4G -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -Xloggc:gc-pinot-broker.log"
     depends_on:
       - pinot-controller
+
   pinot-server:
-    image: apachepinot/pinot:0.12.0
+    image: apachepinot/pinot:1.0.0
     command: "StartServer -zkAddress pinot-zookeeper:2181"
     restart: unless-stopped
     container_name: "pinot-server"
@@ -48,16 +50,12 @@ services:
     depends_on:
       - pinot-broker
 
-
-
   kafka:
     image: docker.io/bitnami/kafka
     hostname: kafka
     container_name: kafka
     ports:
       - "9092:9092"
-    # volumes:
-    #   - "kafka_data:/bitnami"
     environment:
       # KRaft settings
       - KAFKA_CFG_NODE_ID=0
@@ -73,7 +71,7 @@ services:
 
   jobmanager:
     build: 
-      context: docker
+      context: docker/flink
     container_name: jobmanager
     hostname: jobmanager
     command: jobmanager
@@ -82,10 +80,14 @@ services:
     environment:
       - |
         FLINK_PROPERTIES=
-        jobmanager.rpc.address: jobmanager        
+        jobmanager.rpc.address: jobmanager
+    volumes:
+      - ./scripts:/tmp/scripts/
 
   taskmanager:
     image: flink:1.18.0-scala_2.12
+    container_name: taskmanager
+    hostname: taskmanager
     depends_on:
       - jobmanager
     command: taskmanager
@@ -95,17 +97,6 @@ services:
         FLINK_PROPERTIES=
         jobmanager.rpc.address: jobmanager
         taskmanager.numberOfTaskSlots: 16
-  sql-client:
-    image: flink:1.18.0-scala_2.12
-    command: bin/sql-client.sh
-    depends_on:
-      - jobmanager
-    environment:
-      - |
-        FLINK_PROPERTIES=
-        jobmanager.rpc.address: jobmanager
-        rest.address: jobmanager        
-
 
   postgres:
     image: postgres:latest
@@ -125,5 +116,5 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - ./scripts:/docker-entrypoint-initdb.d
+      - ./scripts:/tmp/scripts/
       - ./data/:/tmp/data/

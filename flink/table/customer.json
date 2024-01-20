@@ -1,0 +1,48 @@
+{
+    "schemaName": "customers",
+    "dimensionFieldSpecs": [
+        {
+            "name": "customer_id",
+            "dataType": "INT"
+        },
+        {
+            "name": "store_id",
+            "dataType": "INT"
+        },
+        {
+            "name": "first_name",
+            "dataType": "STRING"
+        },
+        {
+            "name": "last_name",
+            "dataType": "STRING"
+        },
+        {
+            "name": "email",
+            "dataType": "STRING"
+        },
+        {
+            "name": "address_id",
+            "dataType": "STRING"
+        },
+        {
+            "name": "activebool",
+            "dataType": "BOOLEAN"
+        },
+        {
+            "name": "last_update",
+            "dataType": "STRING"
+        }
+    ],
+    "dateTimeFieldSpecs": [
+        {
+            "name": "last_updated_mil",
+            "dataType": "LONG",
+            "format": "EPOCH",
+            "granularity": "1:SECONDS"
+        }
+    ],
+    "primaryKeyColumns": [
+        "customer_id"
+    ]
+}
