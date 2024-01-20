@@ -16,7 +16,6 @@ Build the Flink image to contain connectors to Postgres CDC and Kafka
 docker compose build --no-cache
 ```
 
-
 ## Configuring Postgres For Change Data Capture
 
 We need to load sample data and enable Postgres for change data capture.
@@ -29,63 +28,32 @@ Download the `Download DVD Rental Sample Database` at the bottom of the page whi
 mkdir data
 unzip dvdrental.zip
 mv dvdrental.tar data
-docker compose postgres up -d
-
-# Log into the postgres instance
-docker exec -it postgres bash
-psql -h localhost -U postgres -W
-
 ```
 
-The dump requires a database instance named `dvdrental`. Log into Postgres using the command below. Create the database using the command below.
+## Makefile
 
-```sql
-CREATE DATABASE dvdrental;
-
-ALTER ROLE "postgres" WITH LOGIN;
-ALTER USER postgres REPLICATION;
-ALTER ROLE postgres WITH SUPERUSER CREATEDB CREATEROLE LOGIN ENCRYPTED PASSWORD 'postgres';
-
-\q -- exit
-```
-
-Once back on the bash shell, execute the `pg_restor` command to restore the dump into your own Postgres instance.
+All the commands are available in the Makefile, which we'll leverage to run a series of steps. Run the command below to initialize all postgres, kafka, flink, and pinot.
 
 ```bash
-pg_restore -h localhost -U postgres -d dvdrental /tmp/data/dvdrental.tar
+make all
 ```
 
-Log back into Postgres and explore the restored database.
-```bash
-psql -h localhost -U postgres -W
-```
+Proceed to the Flink and Pinot consoles:
 
-```sql
-\l -- list databases
-\c dvdrental -- connecto to the restored databased
-\d -- list tables (hit `q` to escape from the list)
-select * from customer limit 10;
+Flink http://localhost:8081
+Pinot http://localhost:9000
 
--- enable CDC on tables.
-ALTER TABLE public.customer REPLICA IDENTITY FULL;
-ALTER TABLE public.rental REPLICA IDENTITY FULL;
-```
-
-The last two commands enable CDC the tables we want to consume.
-
-## Flink
-
-Run the command below from Flink home.
+To log into Postgres, run the command below:
 
 ```bash
-docker-compose exec -it jobmanager bash
-
-# start the flink sql shell
-./bin/sql-client.sh -l lib
+docker exec -it postgres psql -h localhost -U postgres
 ```
 
-```sql
+## Flink Postgres CDC Connector
 
+The Flink image is prepared with two connectors: Kafka and Ververica's Postgres CDC connector that wraps Debezium's Postgres connector. (The Makefile does all of this work already. No need to run it.)
+
+```sql
 CREATE TABLE pgcustomer (
     customer_id int primary key not enforced,
     store_id int,
@@ -108,47 +76,33 @@ CREATE TABLE pgcustomer (
     'scan.incremental.snapshot.enabled' = 'true',
     'decoding.plugin.name'='pgoutput'
 );
-
-
 ```
+
+In Postgres, view the replication slots:
 
 ```sql
-CREATE TABLE pgrentals (
-    rental_id  int  primary key not enforced,
-    rental_date timestamp(3),
-    inventory_id int,
-    customer_id int,
-    return_date timestamp(3),
-    staff_id int,
-    last_update timestamp(3)
-) WITH (
-    'connector' = 'postgres-cdc', -- postgres cdc connector
-    'hostname' = 'postgres',
-    'port' = '5432',
-    'username' = 'postgres',
-    'password' = 'postgres',
-    'database-name' = 'dvdrental',
-    'schema-name' = 'public',
-    'table-name' = 'rental',
-    'slot.name' = 'pgrentals',
-    'scan.incremental.snapshot.enabled' = 'true',
-    'decoding.plugin.name'='pgoutput'
-);
+select * from pg_replication_slots;
 ```
 
-## Joining in Flink - Flink SQL
+Flink DAG:
 
 ```mermaid
 flowchart LR
 
-c[Customer]-->Join
-r[Rental]-->Join
-Join-->k[Kafka OBT]-->p[Pinot OBT]
+pgcustomer1-->Join
+pgrental1-->Join
+Join-->OBT-->k1[OBT Topic]-->p1[OBT Table]
+
+pgcustomer2-->customersv-->k2[Customer topic]-->p2[Customer Table]
+pgrental2-->rentalsv-->k3[Rental topic]-->p3[Rental Table]
 ```
 
-```bash
-kafka-topics --bootstrap-server localhost:9092 --create --topic obt
-```
+___**We are not reusing the pgcustomer1 and pgrental1. Cannot reuse the replication slot to build a new leg in the Flink DAG.**___
+
+___**We also cannot write directly from the source table to a sink. We need to have a view in between.**___
+
+
+## Joining in Flink - Flink SQL
 
 In Flink, you'll need to create the destination table that 
 
@@ -187,38 +141,6 @@ JOIN pgcustomer c  ON r.customer_id=c.customer_id;
 
 ```
 
-Sample output into the OBT topic.
-```json
-{
-    "rental_id": 8525,
-    "rental_date": "2005-07-29 10:20:19",
-    "inventory_id": 1322,
-    "customer_id": 111,
-    "return_date": "2005-07-30 05:49:19",
-    "staff_id": 2,
-    "last_update": "2006-02-16 02:30:53",
-    "customer_id": 111,
-    "store_id": 1,
-    "first_name": "Carmen",
-    "last_name": "Owens",
-    "email": "carmen.owens@sakilacustomer.org",
-    "address_id": "115",
-    "activebool": true,
-    "last_updated": null
-}
-```
-
-Run the command below to create a REALTIME table in Pinot
-
-```bash
-docker exec -it pinot-controller bash
-
-./bin/pinot-admin.sh AddTable \
-    -tableConfigFile /tmp/pinot/obt.table.config.json \
-    -schemaFile /tmp/pinot/obt.json \
-    -exec
-```
-
 ## Joining in Apache Pinot
 
 ```mermaid
@@ -233,21 +155,6 @@ r-->|Pinot|Join
 ```
 
 Instead of standing up a Debezium Server or Kafka Connect cluster, we will reuse the Flink cluster we have to pass data through and send data to Pinot.
-
-
-```bash
-kafka-topics.sh \
-    --bootstrap-server localhost:9092 \
-    --create \
-    --topic customer_sink \
-    --config "cleanup.policy=compact"
-
-kafka-topics.sh \
-    --bootstrap-server localhost:9092 \
-    --create \
-    --topic rental_sink \
-    --config "cleanup.policy=compact"
-```
 
 ```sql
 CREATE OR REPLACE TABLE customers_sink(
@@ -299,22 +206,7 @@ FROM pgrentals;
 insert into rental_sink select * from rentalsv;
 ```
 
-Create the Rental table
-
-```bash
-./bin/pinot-admin.sh AddTable \
-    -tableConfigFile /tmp/pinot/rental.table.config.json \
-    -schemaFile /tmp/pinot/rental.json \
-    -exec
-
-
-./bin/pinot-admin.sh AddTable \
-    -tableConfigFile /tmp/pinot/customer.table.config.json \
-    -schemaFile /tmp/pinot/customer.json \
-    -exec
-
-
-```
+## Difference between Joining in the Push Query vs Pull Query
 
 ```sql
 SELECT 
