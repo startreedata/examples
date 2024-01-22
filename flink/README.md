@@ -236,3 +236,5 @@ FROM rental r
 LEFT JOIN customers c  ON r.customer_id=c.customer_id;
 
 ```
+
+The OBT table will be faster without the multi-stage engine. Have more flexibility when joining in Pinot.
