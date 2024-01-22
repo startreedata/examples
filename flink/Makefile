@@ -15,10 +15,11 @@ topics:
 	docker exec -it kafka kafka-topics.sh \
 		--bootstrap-server localhost:9092 \
 		--create \
-		--topic obt \
-		--config "cleanup.policy=compact"
+		--topic obt
 
-tables:
+tables: pobt prental pcustomer
+
+pobt:
 	docker exec -it pinot-controller ./bin/pinot-admin.sh AddTable \
 		-tableConfigFile /tmp/pinot/obt.table.config.json \
 		-schemaFile /tmp/pinot/obt.json \
@@ -26,6 +27,7 @@ tables:
 
 	sleep 5
 
+prental:
 	docker exec -it pinot-controller ./bin/pinot-admin.sh AddTable \
 		-tableConfigFile /tmp/pinot/rental.table.config.json \
 		-schemaFile /tmp/pinot/rental.json \
@@ -33,6 +35,7 @@ tables:
 
 	sleep 5
 
+pcustomer:
 	docker exec -it pinot-controller ./bin/pinot-admin.sh AddTable \
 		-tableConfigFile /tmp/pinot/customer.table.config.json \
 		-schemaFile /tmp/pinot/customer.json \
@@ -48,8 +51,13 @@ dvdrental:
 	docker exec -it postgres psql -h localhost -U postgres -d dvdrental -f /tmp/scripts/cdc.sql
 	sleep 5
 
-streams:
-	docker exec -it jobmanager ./bin/sql-client.sh -l lib -f /tmp/scripts/flink.sql
+streams: obt dims
+
+dims:
+	docker exec -it jobmanager ./bin/sql-client.sh -l lib -f /tmp/scripts/flink.dims.sql
+
+obt:
+	docker exec -it jobmanager ./bin/sql-client.sh -l lib -f /tmp/scripts/flink.obt.sql
 
 
 all: topics tables dvdrental streams

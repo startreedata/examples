@@ -16,7 +16,15 @@ Build the Flink image to contain connectors to Postgres CDC and Kafka
 docker compose build --no-cache
 ```
 
-## Configuring Postgres For Change Data Capture
+## Start
+
+Run the docker compose command below to start the demo.
+
+```bash
+docker compose up -d
+```
+
+## Postgres and Makefile
 
 We need to load sample data and enable Postgres for change data capture.
 
@@ -30,13 +38,13 @@ unzip dvdrental.zip
 mv dvdrental.tar data
 ```
 
-## Makefile
-
 All the commands are available in the Makefile, which we'll leverage to run a series of steps. Run the command below to initialize all postgres, kafka, flink, and pinot.
 
 ```bash
 make all
 ```
+
+You may need to rerun some commands if the server is unavailable.
 
 Proceed to the Flink and Pinot consoles:
 
