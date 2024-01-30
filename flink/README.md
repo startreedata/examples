@@ -216,6 +216,11 @@ insert into rental_sink select * from rentalsv;
 
 ## Difference between Joining in the Push Query vs Pull Query
 
+You want to balance query latency and flexibility using push and pull queries.
+
+![alt](images/pushpull.jpeg)
+
+
 ```sql
 SELECT 
     rental_id,
@@ -238,3 +243,5 @@ LEFT JOIN customers c  ON r.customer_id=c.customer_id;
 ```
 
 The OBT table will be faster without the multi-stage engine. Have more flexibility when joining in Pinot.
+
+
