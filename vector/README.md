@@ -35,7 +35,7 @@ from pinotdb import connect
 from openai import OpenAI
 
 model = 'text-embedding-ada-002'
-search = input("what do want to eat? ")
+search = input("what do you want to eat? ")
 
 client = OpenAI()
 
