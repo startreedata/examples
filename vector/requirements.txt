@@ -1,0 +1,9 @@
+openai
+pinotdb
+pandas
+requests
+sentence_transformers
+matplotlib
+pdf2image
+pyarrow
+
