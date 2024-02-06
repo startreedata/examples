@@ -27,7 +27,14 @@ Search queries using embeddings aren't convenient to author in a SQL editor. Emb
 Run the example using Python below. The application will prompt you for a search query of the reviews. We suggest this query: `tomato soup`. 
 
 ```bash
-python fine_food_reviews.py
+$ python fine_food_reviews.py
+what do you want to eat? tomato soup
+['B0046H30M8', 'great soup', 4, 0.5498560408357057]
+['B000LKTTTW', 'Best tomato soup', 5, 0.5560827995927847]
+['B0042WXFJU', 'Tasty, but....', 4, 0.5712535523938602]
+['B001NGAT9W', 'A Hit!', 5, 0.5916323445185989]
+['B0058CGLH6', "If you like Campbells Pepper pot soup then don't buy this!", 1, 0.5929770105173966]
+['B0005Z7GMA', 'Mrs. Dash Tomato Basil Garlic', 5, 0.5954086280399798]
 ```
 
 ```python
@@ -48,18 +55,15 @@ search_embedding = get_embedding(search)
 conn = connect(host='localhost', port=8000, path='/query/sql', scheme='http')
 curs = conn.cursor()
 curs.execute(f"""
-with DIST as (
-  SELECT 
-    ProductId, 
-    Summary, 
-    Score,
-    l2_distance(embedding, ARRAY{search_embedding}) AS l2_dist
-  from fineFoodReviews
-)
-select * from DIST
-where l2_dist < .6
+SELECT 
+  ProductId, 
+  Summary, 
+  Score,
+  l2_distance(embedding, ARRAY{search_embedding}) AS l2_dist
+from fineFoodReviews
+where VECTOR_SIMILARITY(embedding, ARRAY{search_embedding}, 5)
 order by l2_dist asc
-""", queryOptions="useMultistageEngine=true")
+""")
 
 for row in curs:
     print(row)
