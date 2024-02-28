@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from pinotdb import connect
 from openai import OpenAI
 
