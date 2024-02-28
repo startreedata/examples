@@ -30,7 +30,7 @@ class PinotVector():
         text = text.replace("\n", " ")
         return self.client.embeddings.create(input = [text], model=self.model).data[0].embedding
     
-    def similarity_search(self, query_text:str, dist:int=3, limit:int=10):
+    def similarity_search(self, query_text:str, k:int=3, limit:int=10):
 
         search_embedding = self.get_embedding(query_text)
 
@@ -40,15 +40,16 @@ class PinotVector():
                 source, 
                 content, 
                 metadata,
-                l2_distance(embedding, ARRAY{search_embedding}) AS l2_dist
+                cosine_distance(embedding, ARRAY{search_embedding}) AS cosine
             from documentation
-            -- where VECTOR_SIMILARITY(embedding, ARRAY{search_embedding}, {dist})
-            order by l2_dist asc
+            having cosine < .6
+            order by cosine asc
             limit {limit}
             """
         
         curs.execute(sql)
         df = pd.DataFrame(curs, columns=[item[0] for item in curs.description])
+        print(df)
         loader = DataFrameLoader(df, page_content_column="content")
         return loader.load()
 
@@ -62,7 +63,7 @@ if __name__ == "__main__":
         db = PinotVector(host="localhost")
 
         # Search the DB.
-        results = db.similarity_search(query_text, dist=100)
+        results = db.similarity_search(query_text, k=1000)
         if len(results) == 0:
             print(f"Unable to find matching results.")
         else:
@@ -74,7 +75,8 @@ if __name__ == "__main__":
             response_text = model.invoke(prompt)
 
             sources = [doc.metadata.get("source", None) for doc in results]
-            formatted_response = f"\n\nResponse: {response_text}\nSources: {sources}"
-            print(formatted_response)
+            print("response:")
+            print(f'{response_text.content} \n')
+            [print(f' - {source}') for source in sources]
 
 

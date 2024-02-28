@@ -1,5 +1,11 @@
 # RAG Pinot
 
+```mermaid
+flowchart LR
+
+LangChain-->k[Kafka]-->p[Apache Pinot]
+```
+
 
 ```bash
 
