@@ -30,7 +30,7 @@ class PinotVector():
         text = text.replace("\n", " ")
         return self.client.embeddings.create(input = [text], model=self.model).data[0].embedding
     
-    def similarity_search(self, query_text:str, k:int=3, limit:int=10):
+    def similarity_search(self, query_text:str, dist:int=1, limit:int=10):
 
         search_embedding = self.get_embedding(query_text)
 
@@ -42,14 +42,13 @@ class PinotVector():
                 metadata,
                 cosine_distance(embedding, ARRAY{search_embedding}) AS cosine
             from documentation
-            having cosine < .6
+            having cosine < {dist}
             order by cosine asc
             limit {limit}
             """
         
         curs.execute(sql)
         df = pd.DataFrame(curs, columns=[item[0] for item in curs.description])
-        print(df)
         loader = DataFrameLoader(df, page_content_column="content")
         return loader.load()
 
@@ -60,10 +59,10 @@ if __name__ == "__main__":
         query_text = input("\nsearch query: ")
 
         # Prepare the DB.
-        db = PinotVector(host="localhost")
+        db = PinotVector(host="pinot")
 
         # Search the DB.
-        results = db.similarity_search(query_text, k=1000)
+        results = db.similarity_search(query_text, dist=.5)
         if len(results) == 0:
             print(f"Unable to find matching results.")
         else:

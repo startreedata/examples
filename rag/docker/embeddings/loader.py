@@ -82,8 +82,8 @@ if __name__ == '__main__':
 
     args = sys.argv
 
-    # writer = Kafka({'bootstrap.servers': 'localhost:9092'})
-    writer = StdOut(meta_only=True)
+    writer = Kafka({'bootstrap.servers': 'kafka:9092'})
+    # writer = StdOut(meta_only=True)
 
     l = Loader(url=args[1], writer=writer)
     l.run()
